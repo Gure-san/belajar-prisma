@@ -1,0 +1,120 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ProjectStatusProgress {
+  ASSIGNED
+  IN_REVIEW
+  IN_PROGRESS
+  DONE
+}
+
+enum ProjectStatusVisibility {
+  DRAFT
+  UNPUBLIHSED
+  PUBLISHED
+}
+
+enum AssetStatusReview {
+  APPROVED
+  REJECT
+  IN_REVIEW
+}
+
+model User {
+  user_id Int @id @default(autoincrement())
+
+  project          Project[]
+  ProjectAssignee  ProjectAssignee[]
+  milestoneComment MilestoneComment[]
+}
+
+model Project {
+  project_id        Int                     @id @default(autoincrement())
+  user_id           Int
+  title             String
+  status_progress   ProjectStatusProgress   @default(ASSIGNED)
+  status_visibility ProjectStatusVisibility @default(DRAFT)
+  created_at        DateTime
+  updated_at        DateTime                @updatedAt
+
+  deadline         ProjectDeadline?
+  projectBrief     ProjectBrief?
+  projectMilestone ProjectMilestone[]
+  projectAssignee  ProjectAssignee[]
+  projectAsset     ProjectAsset[]
+  user             User               @relation(fields: [user_id], references: [user_id])
+}
+
+model ProjectDeadline {
+  project_id Int      @id
+  from_date  DateTime
+  to_date    DateTime
+
+  project Project? @relation(fields: [project_id], references: [project_id])
+}
+
+model ProjectAssignee {
+  project_id Int
+  user_id    Int
+
+  project Project @relation(fields: [project_id], references: [project_id])
+  user    User    @relation(fields: [user_id], references: [user_id])
+
+  @@id([project_id, user_id])
+}
+
+model ProjectBrief {
+  project_id Int    @id
+  content    String
+
+  project Project? @relation(fields: [project_id], references: [project_id])
+}
+
+model ProjectAsset {
+  asset_id            Int               @id @default(autoincrement())
+  project_id          Int
+  asset_name          String
+  asset_url           String
+  asset_status_review AssetStatusReview @default(IN_REVIEW)
+
+  market  ProjectAssetMarket[]
+  project Project              @relation(fields: [project_id], references: [project_id])
+}
+
+model ProjectAssetMarket {
+  asset_id    Int
+  market_name String
+
+  projectAsset ProjectAsset @relation(fields: [asset_id], references: [asset_id])
+
+  @@id([asset_id, market_name])
+}
+
+model ProjectMilestone {
+  milestone_id Int      @id @default(autoincrement())
+  project_id   Int
+  title        String
+  due_date     DateTime
+  is_done      Boolean  @default(false)
+
+  project Project            @relation(fields: [project_id], references: [project_id])
+  comment MilestoneComment[]
+}
+
+model MilestoneComment {
+  comment_id   Int      @id @default(autoincrement())
+  milestone_id Int
+  user_id      Int
+  content      String
+  created_at   DateTime
+  updated_at   DateTime @updatedAt
+
+  milestone ProjectMilestone @relation(fields: [milestone_id], references: [milestone_id])
+  user      User             @relation(fields: [user_id], references: [user_id])
+}
