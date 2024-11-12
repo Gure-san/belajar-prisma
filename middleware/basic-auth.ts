@@ -1,26 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export function middlewareBasicAuth(
-  request: NextRequest,
-  response: NextResponse
-) {
-  const reqHeader = request.headers;
-  const credensial = reqHeader.get("Authorization");
+export async function middlewareBasicAuth(request: NextRequest) {
+  const credensial = request.headers.get("Authorization");
 
   if (!credensial) {
-    const resHeader = new Headers({
-      "WWW-Authenticate": 'Basic realm="user_pages"',
+    const nextHeader = new Headers({
+      "WWW-Authenticate": "Basic",
     });
 
-    return NextResponse.json(
-      { error: "Tidak dikenali!" },
-      {
-        status: 401,
-        statusText: "Unauthorized",
-        headers: resHeader,
-      }
-    );
+    const resBody = { error: "Tidak dikenali!" };
+
+    return NextResponse.json(resBody, {
+      status: 401,
+      statusText: "Unauthorized",
+      headers: nextHeader,
+    });
   }
 
-  console.dir(credensial);
+  return NextResponse.next();
 }

@@ -1,6 +1,7 @@
 import { RouteHas } from "next/dist/lib/load-custom-routes";
 import { match } from "path-to-regexp";
-import { NextResponse, NextRequest, MiddlewareConfig } from "next/server";
+import { NextResponse as NextResponseAPI, MiddlewareConfig } from "next/server";
+import type { NextRequest, NextResponse } from "next/server";
 
 /** Didapatkan dari type `MiddlewareConfig` */
 type MiddlewareMatcher = {
@@ -22,13 +23,17 @@ type MiddlewareOperation = {
    * Function operasi middleware
    */
   handler?: () => Promise<
-    (request: NextRequest, response: NextResponse) => NextResponse | void
+    (request: NextRequest) => NextResponse | Promise<NextResponse> | void
   >;
 } & MiddlewareMatcher;
 
-// Mendaftarkan pola url dalam bentuk collection
-// Digunakan untuk mengatur eksekusi operasi middleware tertentu
-// dan eksekusi function `middleware`.
+/**
+ * Mendaftarkan pola url dalam bentuk collection
+ * Digunakan untuk mengatur eksekusi operasi middleware tertentu
+ * dan eksekusi function `middleware`.
+ *
+ * @todo multiple handler in one middlewareOperation (sub handler)
+ */
 const MIDDLEWARE_COLLECTION: MiddlewareOperation[] = [
   {
     name: "Page Authentication",
@@ -40,9 +45,6 @@ const MIDDLEWARE_COLLECTION: MiddlewareOperation[] = [
   {
     name: "API Authentication",
     source: "/api",
-    handler: async () => () => {
-      return NextResponse.next();
-    },
   },
 ];
 
@@ -73,7 +75,7 @@ async function getMatchedMiddleware(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const reqURL = request.nextUrl.pathname;
-  const response = NextResponse.next();
+  const response = NextResponseAPI.next();
 
   // Menjalankan operasi middleware yang sesuai
   const middleware = await getMatchedMiddleware(reqURL);
@@ -82,17 +84,14 @@ export async function middleware(request: NextRequest) {
     const operation = await middleware.handler();
 
     if (!operation) {
-      console.warn(
+      console.error(
         `Handler module operation '${middleware.name}' is not found!`
       );
 
       return;
     }
 
-    /** @todo perlu perbaikan text logging */
-    console.log(`Running middleware '${middleware.name}' operation...`);
-
-    const operationResponse = await operation(request, response);
+    const operationResponse = await operation(request);
 
     if (operationResponse) return operationResponse;
   }
