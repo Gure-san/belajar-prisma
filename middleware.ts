@@ -40,7 +40,9 @@ const MIDDLEWARE_COLLECTION: MiddlewareOperation[] = [
   {
     name: "API Authentication",
     source: "/api",
-    handler: async () => () => NextResponse.next(),
+    handler: async () => () => {
+      return NextResponse.next();
+    },
   },
 ];
 
@@ -87,6 +89,7 @@ export async function middleware(request: NextRequest) {
       return;
     }
 
+    /** @todo perlu perbaikan text logging */
     console.log(`Running middleware '${middleware.name}' operation...`);
 
     const operationResponse = await operation(request, response);
