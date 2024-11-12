@@ -17,12 +17,16 @@ type MiddlewareOperation = {
    */
   name: string;
 
-  /** Function operasi middleware */
+  /**
+   * @todo opsi memberikan function biasa atau module
+   * Function operasi middleware
+   */
   handler?: () => Promise<
     (request: NextRequest, response: NextResponse) => NextResponse | void
   >;
 } & MiddlewareMatcher;
 
+// Mendaftarkan pola url dalam bentuk collection
 // Digunakan untuk mengatur eksekusi operasi middleware tertentu
 // dan eksekusi function `middleware`.
 const MIDDLEWARE_COLLECTION: MiddlewareOperation[] = [
@@ -40,7 +44,6 @@ const MIDDLEWARE_COLLECTION: MiddlewareOperation[] = [
   },
 ];
 
-// Mendaftarkan pola url dalam bentuk collection, menggunakan `config` object.
 export const config = {
   regions: undefined,
   unstable_allowDynamic: undefined,
@@ -84,7 +87,7 @@ export async function middleware(request: NextRequest) {
       return;
     }
 
-    console.log(`Running '${middleware.name}' operation...`);
+    console.log(`Running middleware '${middleware.name}' operation...`);
 
     const operationResponse = await operation(request, response);
 

@@ -4,8 +4,23 @@ export function middlewareBasicAuth(
   request: NextRequest,
   response: NextResponse
 ) {
-  const header = request.headers;
-  console.log("log from middleware basic auth!");
+  const reqHeader = request.headers;
+  const credensial = reqHeader.get("Authorization");
 
-  return response;
+  if (!credensial) {
+    const resHeader = new Headers({
+      "WWW-Authenticate": 'Basic realm="user_pages"',
+    });
+
+    return NextResponse.json(
+      { error: "Tidak dikenali!" },
+      {
+        status: 401,
+        statusText: "Unauthorized",
+        headers: resHeader,
+      }
+    );
+  }
+
+  console.dir(credensial);
 }
